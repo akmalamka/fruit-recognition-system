@@ -1,6 +1,4 @@
 function [ featureVector ] = FruitFeatureExtract( image )
-%FRUITFEATUREEXTRACT Summary of this function goes here
-%   Detailed explanation goes here
 
 %Read in the image
 % figure,imshow(image);
@@ -34,17 +32,7 @@ for u = 1:5
 end
 thresh = imfill(thresh,'holes');
 
-%channel2 = thresh.*saturation;
-%image = edge(channel2,'canny',graythresh(channel2));
-%image = imfill(image,'hole');
-
-% figure, imshow(thresh)
-% title('Thresholded image')
-% figure, imshow(img)
-% title('HSV image')
-
-%find the connected components and take out anything less than 
-%1000 pixels because it is noise and not fruit
+%find the connected components and take out anything less than 1000 pixels because it is noise and not fruit
 connCompThreshold = 1000;
 CC = bwconncomp(thresh);
  
@@ -55,29 +43,17 @@ for i = 1:CC.NumObjects
     end
 end
 
-% figure, imshow(thresh)
-% title('Connected Component thresholded Image')
-
 %find the fruit in the image
 CC = bwconncomp(thresh);
 
 % Extract the fruit from the image
-
-%get an image with the individual fruit in the image ignoring all
-%others
 temp = zeros(row,col);
 temp(CC.PixelIdxList{1}) = 1;
 % figure, imshow(temp)
 % title('Indiviual Fruit that was extracted out')
 
-%Use regionprops to get the bounding box to take out the image and
-%other feature of the fruit
+%Use regionprops to get the bounding box to take out the image and other feature of the fruit
 stats = regionprops(temp,'Area','Perimeter','BoundingBox','Eccentricity','Centroid','FilledImage');
-
-%Put the bounding box that was detected onto the image
-% hold on
-% rectange = rectangle('Position', stats.BoundingBox, 'EdgeColor','r');
-% hold off
 
 %get individual parts of BoundingBox to get X, Y, Width, Height
 %x is the leftmost pixel for the CC
@@ -90,8 +66,7 @@ width = stats.BoundingBox(3); width = round(width);
 height = stats.BoundingBox(4); height = round(height);
 fruit_size = [width,height];
 
-%get short to longer width and height vector to get rid of a few
-%orientation problem
+%get short to longer width and height vector to get rid of a few orientation problem
 [T,I_max] = max(fruit_size);
 [T,I_min] = min(fruit_size);
 longer = fruit_size(I_max);
@@ -112,18 +87,10 @@ channelG(bIndinces) = 255;
 channelB(bIndinces) = 255;
 rgbOut = cat(3, channelR, channelG, channelB);
 
-% figure,imshow(rgbOut)
-% title('Segmented out RGB fruit with white surrounding')
-
-% figure,imshow(image(y:(y + height),x:(x + width),:));
-% title('Segmented out RGB fruit')
-
+%Detect the color of the cropped image
 [ clr ] = findFeat(rgbOut);
 
+%Return the feature vector of the image
 featureVector = [stats.Eccentricity, longer/1000, shorter/1000, clr/3];
-%Eccentricity is the ratio between the major and minor axis
-%0 if it is a perfect circle, 1 if its a parabola
-%between 0 & 1 if it is an ellipse
-%parabola if it is greater than 1
 end
 
